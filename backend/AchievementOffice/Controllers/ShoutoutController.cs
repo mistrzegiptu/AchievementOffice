@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using AchievementOffice.Entities;
 using AchievementOffice.Models;
 using AchievementOffice.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,12 +11,10 @@ namespace AchievementOffice.Controllers
     public class ShoutoutController : ControllerBase
     {
         private readonly IShoutoutService _shoutoutService;
-        private readonly IRankingService _rankingService;
 
-        public ShoutoutController(IShoutoutService shoutoutService, IRankingService rankingService)
+        public ShoutoutController(IShoutoutService shoutoutService)
         {
             _shoutoutService = shoutoutService;
-            _rankingService = rankingService;
         }
 
         [Authorize]
@@ -29,9 +26,7 @@ namespace AchievementOffice.Controllers
             if (!shoutout.IsSuccess)
                 return BadRequest(new { message = shoutout.ErrorMessage });
 
-            var shoutoutValue = shoutout.Value;
 
-            await _rankingService.ApplyShoutOutPointsCreate(shoutoutValue!.SenderId, shoutoutValue!.ReceiverId, null, true);
 
             return CreatedAtAction(
                 nameof(GetShoutoutById),
@@ -75,7 +70,6 @@ namespace AchievementOffice.Controllers
                     _ => BadRequest(new { message = deleted.ErrorMessage })
                 };
 
-            await _rankingService.ApplyShoutOutPointsCreate(shoutout.Value!.SenderId, shoutout.Value!.ReceiverId, true, null);
             return NoContent();
         }
 
@@ -115,8 +109,6 @@ namespace AchievementOffice.Controllers
             if (!result.IsSuccess)
                 return result.ErrorMessage == "Not found" ? NotFound() : BadRequest(new { message = result.ErrorMessage });
 
-            bool? newState = result.Value!.CurrentUserReaction != null ? true : null;
-            await _rankingService.ApplyShoutOutPoints(userId, result.Value!.ReceiverId, result.Value!.PrevReactionState, newState);
 
             return Ok(result.Value);
         }
@@ -134,7 +126,6 @@ namespace AchievementOffice.Controllers
             if (!result.IsSuccess)
                 return result.ErrorMessage == "Not found" ? NotFound() : BadRequest(new { message = result.ErrorMessage });
 
-            await _rankingService.ApplyShoutOutPoints(userId, result.Value!.ReceiverId, result.Value!.PrevReactionState, null);
 
             return Ok(result.Value);
         }
